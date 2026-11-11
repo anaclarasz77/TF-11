@@ -2,33 +2,33 @@
 # Object Calisthenics. A missao e consertar SEM mudar o que ele imprime.
 # Rodar no terminal: python3 loja_feia.py
 
-ped = []                      # todos os pedidos da loja: lista solta, global
+pedidos = []                      # todos os pedidos da loja: lista solta, global
 
 
-class Ped:
-    def __init__(self, n, cnome, ccpf, cmail, rua, cid, cep, tp):
-        self.n = n            # numero do pedido
-        self.cnome = cnome    # os dados do cliente se repetem em CADA pedido dele
-        self.ccpf = ccpf
-        self.cmail = cmail
+class Pedido:
+    def __init__(self, numero, nome_cliente, cpf_cliente, email_cliente, rua, cidade_cliente, cep, tipo_cliente):
+        self.numero = numero            # numero do pedido
+        self.nome_cliente = nome_cliente    # os dados do cliente se repetem em CADA pedido dele
+        self.cpf_cliente = cpf_cliente
+        self.email_cliente = email_cliente
         self.rua = rua
-        self.cid = cid
+        self.cidade_cliente = cidade_cliente
         self.cep = cep
-        self.tp = tp          # tipo do cliente: "N" normal, "V" vip, "F" funcionario
+        self.tipo_cliente = tipo_cliente          # tipo do cliente: "N" normal, "V" vip, "F" funcionario
         self.itens = []       # cada item e uma lista: [produto, qtd, preco]
-        self.st = "A"         # A = aberto, P = pago, C = cancelado
+        self.status = "A"         # A = aberto, P = pago, C = cancelado
 
-    def get_st(self):
-        return self.st
+    def obter_status(self):
+        return self.status
 
-    def set_st(self, v):
-        self.st = v
+    def definir_status(self, novo_status):
+        self.status = novo_status
 
 
-def valida(cmail, ccpf, cep):
-    if len(cmail) > 0:
-        if "@" in cmail:
-            if len(ccpf) == 11:
+def validar_dados(email_cliente, cpf_cliente, cep):
+    if len(email_cliente) > 0:
+        if "@" in email_cliente:
+            if len(cpf_cliente) == 11:
                 if len(cep) == 8:
                     return "ok"
                 else:
@@ -41,46 +41,46 @@ def valida(cmail, ccpf, cep):
         return "email vazio"
 
 
-def novo_ped(n, cnome, ccpf, cmail, rua, cid, cep, tp):
-    r = valida(cmail, ccpf, cep)
-    if r != "ok":
-        print("pedido", n, "recusado:", r)
+def criar_pedido(numero, nome_cliente, cpf_cliente, email_cliente, rua, cidade_cliente, cep, tipo_cliente):
+    resultado_validacao = validar_dados(email_cliente, cpf_cliente, cep)
+    if resultado_validacao != "ok":
+        print("pedido", numero, "recusado:", resultado_validacao)
         return None
     else:
-        p = Ped(n, cnome, ccpf, cmail, rua, cid, cep, tp)
-        ped.append(p)
-        return p
+        pedido = Pedido(numero, nome_cliente, cpf_cliente, email_cliente, rua, cidade_cliente, cep, tipo_cliente)
+        pedidos.append(pedido)
+        return pedido
 
 
-def add_item(p, prod, qtd, vl):
-    p.itens.append([prod, qtd, vl])
+def adicionar_item(pedido, nome_produto, quantidade, valor_unitario):
+    pedido.itens.append([nome_produto, quantidade, valor_unitario])
 
 
-def total(p):
-    t = 0
-    for i in p.itens:
-        t = t + i[1] * i[2]
-    return t
+def calcular_total(pedido):
+    valor_total = 0
+    for item in pedido.itens:
+        valor_total = valor_total + item[1] * item[2]
+    return valor_total
 
 
-def desc(tp, t):
-    if tp == "V":
-        d = t * 0.10
-    elif tp == "F":
-        d = t * 0.20
+def calcular_desconto(tipo_cliente, valor_total):
+    if tipo_cliente == "V":
+        d = valor_total * 0.10
+    elif tipo_cliente == "F":
+        d = valor_total * 0.20
     else:
         d = 0
     return d
 
 
-def a_pagar(p):
-    return total(p) - desc(p.tp, total(p))
+def calcular_valor_a_pagar(pedido):
+    return calcular_total(pedido) - calcular_desconto(pedido.tipo_cliente, calcular_total(pedido))
 
 
-def pagar(p):
-    if p.get_st() == "A":
-        if len(p.itens) > 0:
-            p.set_st("P")
+def pagar(pedido):
+    if pedido.obter_status() == "A":
+        if len(pedido.itens) > 0:
+            pedido.definir_status("P")
             return True
         else:
             return False
@@ -88,15 +88,15 @@ def pagar(p):
         return False
 
 
-def cancelar(p):
-    if p.get_st() == "A":
-        p.set_st("C")
+def cancelar(pedido):
+    if pedido.obter_status() == "A":
+        pedido.definir_status("C")
         return True
     else:
         return False
 
 
-def st_txt(s):
+def descricao_status(s):
     if s == "A":
         return "aberto"
     elif s == "P":
@@ -105,61 +105,61 @@ def st_txt(s):
         return "cancelado"
 
 
-def relatorio():
-    for p in ped:
-        print("Pedido", p.n, "-", p.cnome, "-", p.cid)
-        print("  status:", st_txt(p.get_st()))
-        for i in p.itens:
-            print("  ", i[1], "x", i[0], "= R$ %.2f" % (i[1] * i[2]))
-        if len(p.itens) > 0:
-            print("  total: R$ %.2f | desconto: R$ %.2f | a pagar: R$ %.2f" % (total(p), desc(p.tp, total(p)), a_pagar(p)))
+def exibir_relatorio():
+    for pedido in pedidos:
+        print("Pedido", pedido.numero, "-", pedido.nome_cliente, "-", pedido.cidade_cliente)
+        print("  status:", descricao_status(pedido.obter_status()))
+        for item in pedido.itens:
+            print("  ", item[1], "x", item[0], "= R$ %.2f" % (item[1] * item[2]))
+        if len(pedido.itens) > 0:
+            print("  total: R$ %.2f | desconto: R$ %.2f | a pagar: R$ %.2f" % (calcular_total(pedido), calcular_desconto(pedido.tipo_cliente, calcular_total(pedido)), calcular_valor_a_pagar(pedido)))
 
 
-def arrecadado():
-    t = 0
-    for p in ped:
-        if p.get_st() == "P":
-            t = t + a_pagar(p)
-    return t
+def calcular_arrecadado():
+    valor_total = 0
+    for pedido in pedidos:
+        if pedido.obter_status() == "P":
+            valor_total = valor_total + calcular_valor_a_pagar(pedido)
+    return valor_total
 
 
-def qtd_abertos():
-    q = 0
-    for p in ped:
-        if p.get_st() == "A":
-            q = q + 1
-    return q
+def quantidade_pedidos_abertos():
+    quantidade_abertos = 0
+    for pedido in pedidos:
+        if pedido.obter_status() == "A":
+            quantidade_abertos = quantidade_abertos + 1
+    return quantidade_abertos
 
 
 # --- o roteiro da loja (o TF mantem esta saida identica) -----------------------
-a = novo_ped(1, "Ana Souza", "12345678901", "ana@mail.com", "Rua das Flores, 10", "Sorocaba", "18010000", "V")
-add_item(a, "Caderno", 2, 15.5)
-add_item(a, "Caneta", 5, 2.5)
+primeiro_pedido = criar_pedido(1, "Ana Souza", "12345678901", "ana@mail.com", "Rua das Flores, 10", "Sorocaba", "18010000", "V")
+adicionar_item(primeiro_pedido, "Caderno", 2, 15.5)
+adicionar_item(primeiro_pedido, "Caneta", 5, 2.5)
 
-novo_ped(2, "Bruno Lima", "123", "bruno@mail.com", "Av. Central, 200", "Votorantim", "18110000", "N")
+criar_pedido(2, "Bruno Lima", "123", "bruno@mail.com", "Av. Central, 200", "Votorantim", "18110000", "N")
 
-c = novo_ped(3, "Ana Souza", "12345678901", "ana@mail.com", "Rua das Flores, 10", "Sorocaba", "18010000", "V")
-add_item(c, "Livro", 1, 89.5)
+terceiro_pedido = criar_pedido(3, "Ana Souza", "12345678901", "ana@mail.com", "Rua das Flores, 10", "Sorocaba", "18010000", "V")
+adicionar_item(terceiro_pedido, "Livro", 1, 89.5)
 
-novo_ped(4, "Carla Dias", "98765432100", "carla.mail.com", "Rua do Sol, 55", "Sorocaba", "18020000", "F")
+criar_pedido(4, "Carla Dias", "98765432100", "carla.mail.com", "Rua do Sol, 55", "Sorocaba", "18020000", "F")
 
-e = novo_ped(5, "Diego Rocha", "11122233344", "diego@mail.com", "Rua Nova, 7", "Itu", "13300000", "N")
+quinto_pedido = criar_pedido(5, "Diego Rocha", "11122233344", "diego@mail.com", "Rua Nova, 7", "Itu", "13300000", "N")
 
-f = novo_ped(6, "Eva Nunes", "55566677788", "eva@mail.com", "Alameda Azul, 1", "Itu", "13300001", "F")
-add_item(f, "Fone", 1, 60.0)
+sexto_pedido = criar_pedido(6, "Eva Nunes", "55566677788", "eva@mail.com", "Alameda Azul, 1", "Itu", "13300001", "F")
+adicionar_item(sexto_pedido, "Fone", 1, 60.0)
 
-novo_ped(7, "Fabio Costa", "99988877766", "fabio@mail.com", "Rua Velha, 3", "Itu", "123", "N")
+criar_pedido(7, "Fabio Costa", "99988877766", "fabio@mail.com", "Rua Velha, 3", "Itu", "123", "N")
 
-g = novo_ped(8, "Gil Alves", "44455566677", "gil@mail.com", "Rua do Meio, 9", "Sorocaba", "18030000", "N")
-add_item(g, "Fone", 2, 60.0)
+oitavo_pedido = criar_pedido(8, "Gil Alves", "44455566677", "gil@mail.com", "Rua do Meio, 9", "Sorocaba", "18030000", "N")
+adicionar_item(oitavo_pedido, "Fone", 2, 60.0)
 
-print("pagar 1:", pagar(a))
-print("pagar 3:", pagar(c))
-print("pagar 5:", pagar(e))
-print("pagar 6:", pagar(f))
-print("cancelar 5:", cancelar(e))
-print("cancelar 1:", cancelar(a))
+print("pagar 1:", pagar(primeiro_pedido))
+print("pagar 3:", pagar(terceiro_pedido))
+print("pagar 5:", pagar(quinto_pedido))
+print("pagar 6:", pagar(sexto_pedido))
+print("cancelar 5:", cancelar(quinto_pedido))
+print("cancelar 1:", cancelar(primeiro_pedido))
 
-relatorio()
-print("arrecadado: R$ %.2f" % arrecadado())
-print("abertos:", qtd_abertos())
+exibir_relatorio()
+print("arrecadado: R$ %.2f" % calcular_arrecadado())
+print("abertos:", quantidade_pedidos_abertos())
