@@ -109,8 +109,26 @@ class Endereco:
         return self._cidade
 
 
+class TipoNormal:
+    # Cliente normal não recebe desconto.
+    def calcular_desconto(self, total):
+        return total.percentual(0)
+
+
+class TipoVip:
+    # Cliente VIP recebe 10% de desconto.
+    def calcular_desconto(self, total):
+        return total.percentual(10)
+
+
+class TipoFuncionario:
+    # Funcionário recebe 20% de desconto.
+    def calcular_desconto(self, total):
+        return total.percentual(20)
+
+
 class Cliente:
-    # Associa dados pessoais, endereço e tipo.
+    # Associa dados pessoais, endereço e tipo de cliente.
     def __init__(self, pessoa, endereco, tipo):
         self._pessoa = pessoa
         self._endereco = endereco
@@ -123,7 +141,7 @@ class Cliente:
         return self._endereco.cidade_para_relatorio()
 
     def calcular_desconto(self, total):
-        return calcular_desconto(self._tipo, total)
+        return self._tipo.calcular_desconto(total)
 
 
 class Produto:
@@ -290,7 +308,15 @@ def validar_dados(email, cpf, cep):
 def criar_cliente(nome, cpf, email, rua, cidade, cep, tipo):
     pessoa = Pessoa(nome, Cpf(cpf), Email(email))
     endereco = Endereco(rua, cidade, Cep(cep))
-    return Cliente(pessoa, endereco, tipo)
+
+    tipos = {
+        "N": TipoNormal,
+        "V": TipoVip,
+        "F": TipoFuncionario
+    }
+    tipo_cliente = tipos.get(tipo, TipoNormal)()
+
+    return Cliente(pessoa, endereco, tipo_cliente)
 
 
 def criar_pedido(numero, cliente):
@@ -311,14 +337,6 @@ def adicionar_item(pedido, produto, quantidade):
 
 def calcular_total(pedido):
     return pedido.calcular_total()
-
-
-def calcular_desconto(tipo, valor_total):
-    if tipo == "V":
-        return valor_total.percentual(10)
-    if tipo == "F":
-        return valor_total.percentual(20)
-    return valor_total.percentual(0)
 
 
 def calcular_valor_a_pagar(pedido):
