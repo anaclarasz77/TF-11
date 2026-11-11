@@ -84,16 +84,37 @@ class Status:
         self.codigo = "C"
 
 
-class Cliente:
-    # Reúne os dados de cadastro de um cliente.
-    def __init__(self, nome, cpf, email, rua, cidade, cep, tipo):
+class Pessoa:
+    # Reúne os dados pessoais de um cliente.
+    def __init__(self, nome, cpf, email):
         self.nome = nome
         self.cpf = cpf
         self.email = email
+
+
+class Endereco:
+    # Reúne os dados de localização de um cliente.
+    def __init__(self, rua, cidade, cep):
         self.rua = rua
         self.cidade = cidade
         self.cep = cep
+
+
+class Cliente:
+    # Associa os dados pessoais, o endereço e o tipo do cliente.
+    def __init__(self, pessoa, endereco, tipo):
+        self.pessoa = pessoa
+        self.endereco = endereco
         self.tipo = tipo
+
+    def nome_para_relatorio(self):
+        return self.pessoa.nome
+
+    def cidade_para_relatorio(self):
+        return self.endereco.cidade
+
+    def tipo_de_cliente(self):
+        return self.tipo
 
 
 class Produto:
@@ -175,13 +196,13 @@ class Pedidos:
     def imprimir_relatorio(self):
         for numero, pedido in self._pedidos.items():
             cliente = pedido.cliente
-            print("Pedido", numero, "-", cliente.nome, "-", cliente.cidade)
+            print("Pedido", numero, "-", cliente.nome_para_relatorio(), "-", cliente.cidade_para_relatorio())
             print("  status:", pedido.status.descricao())
             pedido.itens.imprimir()
 
             if pedido.itens.tem_itens():
                 total = pedido.itens.calcular_total()
-                desconto = calcular_desconto(cliente.tipo, total)
+                desconto = calcular_desconto(cliente.tipo_de_cliente(), total)
                 valor_a_pagar = total.subtrair(desconto)
                 print(
                     "  total: %s | desconto: %s | a pagar: %s"
@@ -193,7 +214,7 @@ class Pedidos:
         for pedido in self._pedidos.values():
             if pedido.obter_status() == "P":
                 total = pedido.itens.calcular_total()
-                desconto = calcular_desconto(pedido.cliente.tipo, total)
+                desconto = calcular_desconto(pedido.cliente.tipo_de_cliente(), total)
                 valor_total = valor_total.somar(total.subtrair(desconto))
         return valor_total
 
@@ -219,9 +240,9 @@ def validar_dados(email, cpf, cep):
 
 
 def criar_cliente(nome, cpf, email, rua, cidade, cep, tipo):
-    return Cliente(
-        nome, Cpf(cpf), Email(email), rua, cidade, Cep(cep), tipo
-    )
+    pessoa = Pessoa(nome, Cpf(cpf), Email(email))
+    endereco = Endereco(rua, cidade, Cep(cep))
+    return Cliente(pessoa, endereco, tipo)
 
 
 def criar_pedido(numero, cliente):
@@ -254,7 +275,7 @@ def calcular_desconto(tipo, valor_total):
 
 def calcular_valor_a_pagar(pedido):
     total = calcular_total(pedido)
-    desconto = calcular_desconto(pedido.cliente.tipo, total)
+    desconto = calcular_desconto(pedido.cliente.tipo_de_cliente(), total)
     return total.subtrair(desconto)
 
 
