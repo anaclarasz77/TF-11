@@ -6,10 +6,10 @@ class Cpf:
     def __init__(self, valor):
         if len(valor) != 11:
             raise ValueError("cpf invalido")
-        self.valor = valor
+        self._valor = valor
 
     def __str__(self):
-        return self.valor
+        return self._valor
 
 
 class Email:
@@ -19,10 +19,10 @@ class Email:
             raise ValueError("email vazio")
         if "@" not in valor:
             raise ValueError("email invalido")
-        self.valor = valor
+        self._valor = valor
 
     def __str__(self):
-        return self.valor
+        return self._valor
 
 
 class Cep:
@@ -30,112 +30,136 @@ class Cep:
     def __init__(self, valor):
         if len(valor) != 8:
             raise ValueError("cep invalido")
-        self.valor = valor
+        self._valor = valor
 
     def __str__(self):
-        return self.valor
+        return self._valor
 
 
 class Dinheiro:
     # Armazena dinheiro em centavos inteiros.
     def __init__(self, centavos):
-        self.centavos = int(centavos)
+        self._centavos = int(centavos)
 
     def somar(self, outro):
-        return Dinheiro(self.centavos + outro.centavos)
+        return Dinheiro(self._centavos + outro._centavos)
 
     def subtrair(self, outro):
-        return Dinheiro(self.centavos - outro.centavos)
+        return Dinheiro(self._centavos - outro._centavos)
 
     def multiplicar(self, quantidade):
-        return Dinheiro(self.centavos * quantidade)
+        return Dinheiro(self._centavos * quantidade)
 
     def percentual(self, porcentagem):
-        centavos = (self.centavos * porcentagem + 50) // 100
+        centavos = (self._centavos * porcentagem + 50) // 100
         return Dinheiro(centavos)
 
     def __str__(self):
-        reais = self.centavos // 100
-        centavos = self.centavos % 100
+        reais = self._centavos // 100
+        centavos = self._centavos % 100
         return f"R$ {reais}.{centavos:02d}"
 
 
 class Status:
-    # Representa o estado de um pedido.
+    # Representa e controla o estado de um pedido.
     def __init__(self, codigo):
         if codigo not in ("A", "P", "C"):
             raise ValueError("status invalido")
-        self.codigo = codigo
+        self._codigo = codigo
 
     def descricao(self):
         return {
             "A": "aberto",
             "P": "pago",
             "C": "cancelado"
-        }[self.codigo]
+        }[self._codigo]
 
     def esta_aberto(self):
-        return self.codigo == "A"
+        return self._codigo == "A"
+
+    def esta_pago(self):
+        return self._codigo == "P"
 
     def pagar(self):
-        self.codigo = "P"
+        self._codigo = "P"
 
     def cancelar(self):
-        self.codigo = "C"
+        self._codigo = "C"
 
 
 class Pessoa:
     # Reúne os dados pessoais de um cliente.
     def __init__(self, nome, cpf, email):
-        self.nome = nome
-        self.cpf = cpf
-        self.email = email
+        self._nome = nome
+        self._cpf = cpf
+        self._email = email
+
+    def nome_para_relatorio(self):
+        return self._nome
 
 
 class Endereco:
     # Reúne os dados de localização de um cliente.
     def __init__(self, rua, cidade, cep):
-        self.rua = rua
-        self.cidade = cidade
-        self.cep = cep
+        self._rua = rua
+        self._cidade = cidade
+        self._cep = cep
+
+    def cidade_para_relatorio(self):
+        return self._cidade
 
 
 class Cliente:
-    # Associa os dados pessoais, o endereço e o tipo do cliente.
+    # Associa dados pessoais, endereço e tipo.
     def __init__(self, pessoa, endereco, tipo):
-        self.pessoa = pessoa
-        self.endereco = endereco
-        self.tipo = tipo
+        self._pessoa = pessoa
+        self._endereco = endereco
+        self._tipo = tipo
 
     def nome_para_relatorio(self):
-        return self.pessoa.nome
+        return self._pessoa.nome_para_relatorio()
 
     def cidade_para_relatorio(self):
-        return self.endereco.cidade
+        return self._endereco.cidade_para_relatorio()
 
-    def tipo_de_cliente(self):
-        return self.tipo
+    def calcular_desconto(self, total):
+        return calcular_desconto(self._tipo, total)
 
 
 class Produto:
     # Representa um produto e seu preço unitário.
     def __init__(self, nome, preco):
-        self.nome = nome
-        self.preco = preco
+        self._nome = nome
+        self._preco = preco
+
+    def calcular_total(self, quantidade):
+        return self._preco.multiplicar(quantidade)
+
+    def nome_para_relatorio(self):
+        return self._nome
 
 
 class ItemDoPedido:
     # Associa um produto à quantidade comprada.
     def __init__(self, produto, quantidade):
-        self.produto = produto
-        self.quantidade = quantidade
+        self._produto = produto
+        self._quantidade = quantidade
 
     def calcular_total(self):
-        return self.produto.preco.multiplicar(self.quantidade)
+        return self._produto.calcular_total(self._quantidade)
+
+    def imprimir(self):
+        print(
+            "  ",
+            self._quantidade,
+            "x",
+            self._produto.nome_para_relatorio(),
+            "= %s" % self.calcular_total()
+        )
 
 
 class ItensDoPedido:
-    # Administra os itens de um pedido sem expor sua lista interna.
+    # Administra os itens sem expor sua lista interna.
     def __init__(self):
         self._itens = []
 
@@ -153,27 +177,66 @@ class ItensDoPedido:
 
     def imprimir(self):
         for item in self._itens:
-            print(
-                "  ",
-                item.quantidade,
-                "x",
-                item.produto.nome,
-                "= %s" % item.calcular_total()
-            )
+            item.imprimir()
 
 
 class Pedido:
-    # Reúne o cliente, os itens e o status, sem guardar seu número.
+    # Controla o cliente, os itens e o próprio status.
     def __init__(self, cliente):
-        self.cliente = cliente
-        self.itens = ItensDoPedido()
-        self.status = Status("A")
+        self._cliente = cliente
+        self._itens = ItensDoPedido()
+        self._status = Status("A")
 
-    def obter_status(self):
-        return self.status.codigo
+    def adicionar_item(self, produto, quantidade):
+        self._itens.adicionar(produto, quantidade)
 
-    def definir_status(self, novo_status):
-        self.status.codigo = novo_status
+    def calcular_total(self):
+        return self._itens.calcular_total()
+
+    def esta_aberto(self):
+        return self._status.esta_aberto()
+
+    def esta_pago(self):
+        return self._status.esta_pago()
+
+    def descricao_status(self):
+        return self._status.descricao()
+
+    def pagar(self):
+        if not self._status.esta_aberto():
+            return False
+        if not self._itens.tem_itens():
+            return False
+        self._status.pagar()
+        return True
+
+    def cancelar(self):
+        if not self._status.esta_aberto():
+            return False
+        self._status.cancelar()
+        return True
+
+    def valor_a_pagar(self):
+        total = self.calcular_total()
+        desconto = self._cliente.calcular_desconto(total)
+        return total.subtrair(desconto)
+
+    def imprimir(self, numero):
+        print(
+            "Pedido", numero, "-",
+            self._cliente.nome_para_relatorio(), "-",
+            self._cliente.cidade_para_relatorio()
+        )
+        print("  status:", self.descricao_status())
+        self._itens.imprimir()
+
+        if self._itens.tem_itens():
+            total = self.calcular_total()
+            desconto = self._cliente.calcular_desconto(total)
+            print(
+                "  total: %s | desconto: %s | a pagar: %s"
+                % (total, desconto, self.valor_a_pagar())
+            )
 
 
 class Pedidos:
@@ -184,44 +247,29 @@ class Pedidos:
     def adicionar(self, numero, pedido):
         self._pedidos[numero] = pedido
 
-    def obter(self, numero):
-        return self._pedidos[numero]
-
     def pagar(self, numero):
-        return pagar(self.obter(numero))
+        pedido = self._pedidos[numero]
+        return pedido.pagar()
 
     def cancelar(self, numero):
-        return cancelar(self.obter(numero))
+        pedido = self._pedidos[numero]
+        return pedido.cancelar()
 
     def imprimir_relatorio(self):
         for numero, pedido in self._pedidos.items():
-            cliente = pedido.cliente
-            print("Pedido", numero, "-", cliente.nome_para_relatorio(), "-", cliente.cidade_para_relatorio())
-            print("  status:", pedido.status.descricao())
-            pedido.itens.imprimir()
-
-            if pedido.itens.tem_itens():
-                total = pedido.itens.calcular_total()
-                desconto = calcular_desconto(cliente.tipo_de_cliente(), total)
-                valor_a_pagar = total.subtrair(desconto)
-                print(
-                    "  total: %s | desconto: %s | a pagar: %s"
-                    % (total, desconto, valor_a_pagar)
-                )
+            pedido.imprimir(numero)
 
     def calcular_arrecadado(self):
         valor_total = Dinheiro(0)
         for pedido in self._pedidos.values():
-            if pedido.obter_status() == "P":
-                total = pedido.itens.calcular_total()
-                desconto = calcular_desconto(pedido.cliente.tipo_de_cliente(), total)
-                valor_total = valor_total.somar(total.subtrair(desconto))
+            if pedido.esta_pago():
+                valor_total = valor_total.somar(pedido.valor_a_pagar())
         return valor_total
 
     def quantidade_abertos(self):
         quantidade = 0
         for pedido in self._pedidos.values():
-            if pedido.obter_status() == "A":
+            if pedido.esta_aberto():
                 quantidade += 1
         return quantidade
 
@@ -258,11 +306,11 @@ def recusar_pedido(numero, nome, cpf, email, rua, cidade, cep, tipo):
 
 
 def adicionar_item(pedido, produto, quantidade):
-    pedido.itens.adicionar(produto, quantidade)
+    pedido.adicionar_item(produto, quantidade)
 
 
 def calcular_total(pedido):
-    return pedido.itens.calcular_total()
+    return pedido.calcular_total()
 
 
 def calcular_desconto(tipo, valor_total):
@@ -274,25 +322,7 @@ def calcular_desconto(tipo, valor_total):
 
 
 def calcular_valor_a_pagar(pedido):
-    total = calcular_total(pedido)
-    desconto = calcular_desconto(pedido.cliente.tipo_de_cliente(), total)
-    return total.subtrair(desconto)
-
-
-def pagar(pedido):
-    if pedido.obter_status() != "A":
-        return False
-    if not pedido.itens.tem_itens():
-        return False
-    pedido.definir_status("P")
-    return True
-
-
-def cancelar(pedido):
-    if pedido.obter_status() != "A":
-        return False
-    pedido.definir_status("C")
-    return True
+    return pedido.valor_a_pagar()
 
 
 def descricao_status(status):
